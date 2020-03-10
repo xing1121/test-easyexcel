@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.wdx.easy.domain.Cat;
 import com.wdx.easy.domain.Person;
 import com.wdx.easy.util.DateUtils;
-import com.wdx.easy.util.EasyexcelUtils;
+import com.wdx.easy.util.EasyexcelUtil;
 
 /**
  * 描述：测试Easyexcel
@@ -45,7 +45,7 @@ public class EasyexcelTest {
 			// 标题
 			List<String> headers = Arrays.asList("ID", "猫的名", "重量", "SEX");
 			// 转为文件输出
-			EasyexcelUtils.export4Output(headers, cats, new FileOutputStream(new File("D:/user/80002888/桌面/poi.xlsx")), null);
+			EasyexcelUtil.list2Out(headers, cats, new FileOutputStream(new File("D:/user/80002888/桌面/poi.xlsx")), null);
 		} catch (Exception e) {
 			logger.error("get error->", e);
 		}
@@ -90,7 +90,7 @@ public class EasyexcelTest {
 			// 标题
 			List<String> headers = Arrays.asList("姓名", "年龄", "出生日期", "生日", "是否有工作", "工资");
 			// 转为文件输出
-			EasyexcelUtils.export4Output(headers, persons, new FileOutputStream(new File("D:/user/80002888/桌面/poi.xlsx")), Arrays.asList("id"));
+			EasyexcelUtil.list2Out(headers, persons, new FileOutputStream(new File("D:/user/80002888/桌面/poi.xlsx")), Arrays.asList("id"));
 		} catch (Exception e) {
 			logger.error("get error->", e);
 		}
