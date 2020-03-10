@@ -31,7 +31,7 @@ public class DateUtils {
 	 *  @Param  @param pattern
 	 *  @Param  @return
 	 */
-	public static Date str2Date(String dateStr, String pattern){
+	public static Date string2Date(String dateStr, String pattern){
 		lock.lock();
 		try {
 			if (StringUtils.isBlank(dateStr) || StringUtils.isBlank(pattern)) {
@@ -54,7 +54,7 @@ public class DateUtils {
 	 *  @Param  @param pattern
 	 *  @Param  @return
 	 */
-	public static String date2Str(Date date, String pattern){
+	public static String date2String(Date date, String pattern){
 		lock.lock();
 		try {
 			if (date == null || StringUtils.isBlank(pattern)) {
