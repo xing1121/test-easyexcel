@@ -1,7 +1,9 @@
 package com.wdx.easy.test;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,14 +29,71 @@ public class EasyexcelTest {
 	
 	private static String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
 	
+	private static final String FILE_PATH = "D:/user/80002888/desktop/poi.xlsx";
+	
 	/**
-	 * 测试集合转输出流
+	 * 测试导出大量数据
+	 *	@ReturnType	void 
+	 *	@Date	2018年9月11日	下午4:19:48
+	 *  @Param
+	 */
+	@Test
+	public void testExport3(){
+		long start = System.currentTimeMillis();
+		
+		try {
+			int size = 1048575;
+			System.out.println("数据大小：" + size);
+			// 构造集合
+			List<Cat> cats = new ArrayList<>(size);
+			for (int i = 0; i < size; i++) {
+				cats.add(new Cat((long)i, "汤姆" + i, 12.53F + i, '公'));
+			}
+			// 标题
+			List<String> headers = new ArrayList<>();
+			headers.add("ID");
+			headers.add("猫的名");
+			headers.add("重量");
+			headers.add("SEX");
+			EasyexcelUtil.list2Out(headers, cats, new FileOutputStream(new File(FILE_PATH)), null, false);
+		} catch (Exception e) {
+			logger.error("get error->", e);
+		}
+		
+		long end = System.currentTimeMillis();
+		System.out.println("耗时：" + (end - start)/1000 + "s");
+	}
+	
+	/**
+	 * 测试导入2
+	 *	@ReturnType	void 
+	 *	@Date	2018年9月11日	下午4:24:34
+	 *  @Param
+	 */
+	@Test
+	public void testImport2(){
+		try {
+			// xlsx中每一列顺序对应实体的属性名
+			List<String> fieldNames = new ArrayList<>();
+			fieldNames.add("id");
+			fieldNames.add("name");
+			fieldNames.add("weight");
+			fieldNames.add("sex");
+			List<Cat> list = EasyexcelUtil.input2List(fieldNames, Cat.class, new FileInputStream(new File(FILE_PATH)));
+			list.forEach(System.out::println);
+		} catch (Exception e) {
+			logger.error("get error->", e);
+		}
+	}
+	
+	/**
+	 * 测试导出2
 	 *	@ReturnType	void 
 	 *	@Date	2019年3月26日	上午9:35:53
 	 *  @Param
 	 */
 	@Test
-	public void test2(){
+	public void testExport2(){
 		try {
 			// 数据
 			List<Cat> cats = Arrays.asList(
@@ -45,20 +104,45 @@ public class EasyexcelTest {
 			// 标题
 			List<String> headers = Arrays.asList("ID", "猫的名", "重量", "SEX");
 			// 转为文件输出
-			EasyexcelUtil.list2Out(headers, cats, new FileOutputStream(new File("D:/user/80002888/桌面/poi.xlsx")), null);
+			EasyexcelUtil.list2Out(headers, cats, new FileOutputStream(new File(FILE_PATH)), null, false);
 		} catch (Exception e) {
 			logger.error("get error->", e);
 		}
 	}
 	
 	/**
-	 * 测试集合转输出流
+	 * 测试导入1
+	 *	@ReturnType	void 
+	 *	@Date	2018年9月10日	下午5:48:12
+	 *  @Param
+	 */
+	@Test
+	public void testImport1(){
+		try {
+			// xlsx中每一列顺序对应实体的属性名
+			List<String> fieldNames = new ArrayList<>();
+//			fieldNames.add("id");
+			fieldNames.add("name");
+			fieldNames.add("age");
+			fieldNames.add("birthDay");
+			fieldNames.add("birthDayTime");
+			fieldNames.add("workStatus");
+			fieldNames.add("salary");
+			List<Person> list = EasyexcelUtil.input2List(fieldNames, Person.class, new FileInputStream(new File(FILE_PATH)));
+			list.forEach(System.out::println);
+		} catch (Exception e) {
+			logger.error("get error->", e);
+		}
+	}
+	
+	/**
+	 * 测试导出1
 	 *	@ReturnType	void 
 	 *	@Date	2019年3月26日	上午9:35:50
 	 *  @Param
 	 */
 	@Test
-	public void test1() {
+	public void testExport1() {
 		try {
 			// 数据
 			List<Person> persons = Arrays.asList(
@@ -90,7 +174,7 @@ public class EasyexcelTest {
 			// 标题
 			List<String> headers = Arrays.asList("姓名", "年龄", "出生日期", "生日", "是否有工作", "工资");
 			// 转为文件输出
-			EasyexcelUtil.list2Out(headers, persons, new FileOutputStream(new File("D:/user/80002888/桌面/poi.xlsx")), Arrays.asList("id"));
+			EasyexcelUtil.list2Out(headers, persons, new FileOutputStream(new File(FILE_PATH)), Arrays.asList("id"), false);
 		} catch (Exception e) {
 			logger.error("get error->", e);
 		}

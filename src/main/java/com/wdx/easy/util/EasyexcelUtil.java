@@ -1,5 +1,6 @@
 package com.wdx.easy.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,6 +33,27 @@ public class EasyexcelUtil {
 	private static Logger logger = LoggerFactory.getLogger(EasyexcelUtil.class);
 	
 	/**
+	 * 输入byte[]，转为对象集合
+	 *	@ReturnType	List<T> 
+	 *	@Date	2018年9月11日	下午3:33:22
+	 *  @Param  @param fieldNames		xlsx中每一列顺序对应实体的属性名，可以为null
+	 *  @Param  @param clazz			实体类
+	 *  @Param  @param bytes			输入数组
+	 *  @Param  @return
+	 */
+	public static <T> List<T> bytes2List(List<String> fieldNames, Class<T> clazz, byte[] bytes) {
+		if (clazz == null || bytes == null || bytes.length == 0) {
+			return null;
+		}
+		try {
+			return input2List(fieldNames, clazz, new ByteArrayInputStream(bytes));
+		} catch (Exception e) {
+			logger.error("get error->", e);
+		}
+		return null;
+	}
+	
+	/**
 	 * Excel的第一行转为对象的属性，其他行每行转为一条数据
 	 *	@ReturnType	List<T> 
 	 *	@Date	2018年9月10日	下午6:54:39
@@ -45,7 +67,7 @@ public class EasyexcelUtil {
 		ExcelReader reader = new ExcelReader(in, res, new AnalysisEventListener<List<Object>>() {
 			@Override
 			public void invoke(List<Object> object, AnalysisContext context) {
-				T t = ObjectUtils.list2Object(object, null, clazz);
+				T t = ObjectUtils.list2Object(object, fieldNames, clazz);
 				if (t != null) {
 					res.add(t);
 				}
@@ -60,15 +82,33 @@ public class EasyexcelUtil {
 	}
 	
 	/**
+	 * 对象集合sourceList转输出字节数组byte[]
+	 *	@ReturnType	byte[] 
+	 *	@Date	2020年3月10日	上午9:26:50
+	 *  @Param  @param headers				xlsx文件中第一行（表头）按顺序显示的列名，可以为null
+	 *  @Param  @param sourceList			实体集合
+	 *  @Param  @param out					输出流
+	 *  @Param  @param propertyNames		属性名称
+	 *  @Param  @param keepFlag				属性保留还是去除
+	 *  @Param  @return
+	 */
+	public static <T> byte[] list2Byte(List<String> headers, List<T> sourceList, List<String> propertyNames, boolean keepFlag){
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		list2Out(headers, sourceList, bos, propertyNames, keepFlag);
+		return bos.toByteArray();
+	}
+	
+	/**
 	 * 对象集合sourceList转输出out
 	 *	@ReturnType	void 
 	 *	@Date	2020年3月10日	下午5:28:30
-	 *  @Param  @param out					输出流
 	 *  @Param  @param headers				xlsx文件中第一行（表头）按顺序显示的列名，可以为null
 	 *  @Param  @param sourceList			实体集合
-	 *  @Param  @param ignoreProperties		忽视的属性名称
+	 *  @Param  @param out					输出流
+	 *  @Param  @param propertyNames		属性名称
+	 *  @Param  @param keepFlag				属性保留还是去除
 	 */
-	public static <T> void list2Out(List<String> headers, List<T> sourceList, OutputStream out, List<String> ignoreProperties){
+	public static <T> void list2Out(List<String> headers, List<T> sourceList, OutputStream out, List<String> propertyNames, boolean keepFlag){
 		Instant start = Instant.now();
         ExcelWriter writer = new ExcelWriter(out, ExcelTypeEnum.XLSX, true);
         // 创建sheet
@@ -77,40 +117,37 @@ public class EasyexcelUtil {
         // 表头
         List<List<String>> head = new ArrayList<>(10);
         if (headers != null && headers.size() != 0) {
+        	// 使用参数当表头
         	for (String headName : headers) {
         		head.add(Arrays.asList(headName));
         	}
 		} else {
+			// 使用默认表头
 			Class<?> clazz = sourceList.get(0).getClass();
 			Field[] fields = clazz.getDeclaredFields();
-			for (Field field : fields) {
-				String fieldName = field.getName();
-				if (ignoreProperties == null || !ignoreProperties.contains(fieldName)) {
+			// 保留还是去除
+			if (keepFlag) {
+				// 参数属性要保留
+				for (String propertyName : propertyNames) {
+					head.add(Arrays.asList(propertyName));
+				}
+			} else {
+				// 参数属性要去除
+				for (Field field : fields) {
+					String fieldName = field.getName();
+					if (propertyNames != null && propertyNames.contains(field.getName())) {
+						continue;
+					}
 					head.add(Arrays.asList(fieldName));
 				}
 			}
 		}
         sheet.setHead(head);
         // 内容
-        writer.write1(ObjectUtils.objects2Lists(sourceList, ignoreProperties, false), sheet);
+        writer.write1(ObjectUtils.objects2Lists(sourceList, propertyNames, keepFlag), sheet);
         writer.finish();
         Instant end = Instant.now();
         logger.info("集合转OutputStream转换完成，耗时（ms）->" + Duration.between(start, end).toMillis());
-	}
-	
-	/**
-	 * 对象集合sourceList转输出字节数组byte[]
-	 *	@ReturnType	byte[] 
-	 *	@Date	2020年3月10日	上午9:26:50
-	 *  @Param  @param headers
-	 *  @Param  @param sourceList
-	 *  @Param  @param ignoreProperties
-	 *  @Param  @return
-	 */
-	public static <T> byte[] list2Byte(List<String> headers, List<T> sourceList, List<String> ignoreProperties){
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		list2Out(headers, sourceList, bos, ignoreProperties);
-		return bos.toByteArray();
 	}
 	
 }

@@ -163,6 +163,8 @@ public class ObjectUtils {
 	                	field.set(t, Float.valueOf(value));
 	                } else if(Double.class.isAssignableFrom(fieldType)) {
 	                    field.set(t, Double.valueOf(value));
+	                } else if(Boolean.class.isAssignableFrom(fieldType)) {
+	                	field.set(t, Boolean.valueOf(value));
 	                } else {
 	                    field.set(t, value);
 	                }
