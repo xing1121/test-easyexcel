@@ -263,16 +263,17 @@ public class ObjectUtils {
 				logger.error("get error->" + t, e);
 			}
 			// 判断如果是日期，则日期格式化
-			boolean dateFlag = (value != null && value instanceof Date)
-					|| Date.class.isAssignableFrom(field.getType()) 
-					|| Date.class.getSimpleName().equals(field.getType().getSimpleName());
+			boolean dateFlag = value != null 
+					&& (value instanceof Date
+						|| Date.class.isAssignableFrom(field.getType()) 
+						|| Date.class.getSimpleName().equals(field.getType().getSimpleName()));
 			if (dateFlag) {
 				try {
 					JSONField annotation = field.getAnnotation(JSONField.class);
 					if (annotation == null) {
 						String methodName = "get" + toUpperCaseFirstOne(field.getName());
 						Method method = reflectionClass.getNoParamMethod(methodName);
-						annotation = AnnotationUtil.getAnnotation(method, JSONField.class);
+						annotation = method.getAnnotation(JSONField.class);
 					}
 					String format = annotation == null ? "yyyy-MM-dd HH:mm:ss" : annotation.format();
 					value = DateUtils.date2String((Date)value, format);
@@ -280,7 +281,10 @@ public class ObjectUtils {
 					logger.error("get error->" + t, e);
 				}
 			}
-			if (value != null && value instanceof Long) {
+			// Long类型转int值
+			boolean longFlag = value != null 
+					&& value instanceof Long;
+			if (longFlag) {
 				value = ((Long)value).intValue();
 			}
 			// 添加到集合中
