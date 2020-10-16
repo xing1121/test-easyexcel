@@ -116,12 +116,9 @@ public class EasyexcelUtil {
 	 * 对象集合sourceList转Excel，输出字节数组byte[]
 	 *	@ReturnType	void 
 	 *	@Date	2020年3月10日	下午5:28:30
-	 *  @Param  @param out					输出流
 	 *  @Param  @param paramDtoList			参数集合
 	 */
-	public static byte[] list2Byte(
-			OutputStream out, 
-			List<EasyExcelParamDto> paramDtoList){
+	public static byte[] list2Byte(List<EasyExcelParamDto> paramDtoList){
 		Assert.notEmpty(paramDtoList);
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		list2Out(bos, paramDtoList);
