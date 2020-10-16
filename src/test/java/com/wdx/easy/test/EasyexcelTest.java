@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.wdx.easy.domain.Person2020;
+import com.wdx.easy.dto.EasyExcelParamDto;
 import com.wdx.easy.util.DateUtils;
 import com.wdx.easy.util.EasyexcelUtil;
 
@@ -29,6 +30,40 @@ public class EasyexcelTest {
 	private static String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
 	
 	private static final String FILE_PATH = "D:/user/80002888/desktop/easyExcelTest.xlsx";
+	
+	
+	/**
+	 * 测试导出4
+	 *	@ReturnType	void 
+	 *	@Date	2019年3月26日	上午9:35:50
+	 *  @Param
+	 */
+	@Test
+	public void testExport4() {
+		try {
+			// 构造数据
+			List<EasyExcelParamDto> paramDtoList = Arrays.asList(
+					new EasyExcelParamDto(
+							"sheet0001", 
+							Arrays.asList("工作名称", "入职日期", "姓名", "年龄", "生日", "是否有工作", "工资"), 
+							getDatas(0), 
+							Arrays.asList("id", "birthDay", "companyName"), 
+							false),
+					new EasyExcelParamDto(
+							"sheet0002", 
+							Arrays.asList("ID", "生日快乐", "公司规范名称"), 
+							getDatas(100), 
+							Arrays.asList("id", "birthDay", "companyName"), 
+							true)
+					);
+			// 转为文件输出
+			EasyexcelUtil.list2Out(
+					new FileOutputStream(new File(FILE_PATH)), 
+					paramDtoList);
+		} catch (Exception e) {
+			logger.error("get error->", e);
+		}
+	}
 	
 	/**
 	 * 测试导入大量数据
@@ -66,9 +101,9 @@ public class EasyexcelTest {
 			List<Person2020> datas = getDatas(1000000);
 			System.out.println("数据大小：" + datas.size());
 			EasyexcelUtil.list2Out(
+					new FileOutputStream(new File(FILE_PATH)), 
 					null, 
-					datas, 
-					new FileOutputStream(new File(FILE_PATH)), null, false);
+					datas, null, false);
 			long end = System.currentTimeMillis();
 			System.out.println("耗时：" + (end - start)/1000 + "s");
 		} catch (Exception e) {
@@ -112,7 +147,7 @@ public class EasyexcelTest {
 			// 数据
 			List<Person2020> persons = getDatas(0);
 			// 转为文件输出
-			EasyexcelUtil.list2Out(null, persons, new FileOutputStream(new File(FILE_PATH)), Arrays.asList("companyName", "id", "birthDay"), true);
+			EasyexcelUtil.list2Out(new FileOutputStream(new File(FILE_PATH)), null, persons, Arrays.asList("companyName", "id", "birthDay"), true);
 		} catch (Exception e) {
 			logger.error("get error->", e);
 		}
@@ -160,7 +195,7 @@ public class EasyexcelTest {
 			// 标题
 			List<String> headers = Arrays.asList("工作名称", "入职日期", "姓名", "年龄", "生日", "是否有工作", "工资");
 			// 转为文件输出
-			EasyexcelUtil.list2Out(headers, persons, new FileOutputStream(new File(FILE_PATH)), Arrays.asList("id", "birthDay", "companyName"), false);
+			EasyexcelUtil.list2Out(new FileOutputStream(new File(FILE_PATH)), headers, persons, Arrays.asList("id", "birthDay", "companyName"), false);
 		} catch (Exception e) {
 			logger.error("get error->", e);
 		}

@@ -19,6 +19,7 @@ import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.alibaba.excel.support.ExcelTypeEnum;
+import com.wdx.easy.dto.EasyExcelParamDto;
 import com.wdx.easy.reflection.ReflectionClass;
 
 import cn.hutool.core.lang.Assert;
@@ -44,7 +45,10 @@ public class EasyexcelUtil {
 	 *  @Param  @param bytes			输入数组
 	 *  @Param  @return
 	 */
-	public static <T> List<T> bytes2List(List<String> fieldNames, Class<T> clazz, byte[] bytes) {
+	public static <T> List<T> bytes2List(
+			List<String> fieldNames, 
+			Class<T> clazz, 
+			byte[] bytes) {
 		Assert.notNull(clazz);
 		Assert.isTrue(bytes != null && bytes.length > 0);
 		return input2List(fieldNames, clazz, new ByteArrayInputStream(bytes));
@@ -59,7 +63,10 @@ public class EasyexcelUtil {
 	 *  @Param  @param in				输入流
 	 *  @Param  @return
 	 */
-	public static <T> List<T> input2List(List<String> fieldNames, Class<T> clazz, InputStream in) {
+	public static <T> List<T> input2List(
+			List<String> fieldNames, 
+			Class<T> clazz, 
+			InputStream in) {
 		Assert.notNull(clazz);
 		Assert.notNull(in);
         Instant start = Instant.now();
@@ -94,10 +101,30 @@ public class EasyexcelUtil {
 	 *  @Param  @param keepFlag				属性保留还是去除
 	 *  @Param  @return
 	 */
-	public static <T> byte[] list2Byte(List<String> headers, List<T> sourceList, List<String> propertyNames, boolean keepFlag){
+	public static <T> byte[] list2Byte(
+			List<String> headers, 
+			List<T> sourceList, 
+			List<String> propertyNames, 
+			boolean keepFlag){
 		Assert.notEmpty(sourceList);
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		list2Out(headers, sourceList, bos, propertyNames, keepFlag);
+		list2Out(bos, headers, sourceList, propertyNames, keepFlag);
+		return bos.toByteArray();
+	}
+	
+	/**
+	 * 对象集合sourceList转Excel，输出字节数组byte[]
+	 *	@ReturnType	void 
+	 *	@Date	2020年3月10日	下午5:28:30
+	 *  @Param  @param out					输出流
+	 *  @Param  @param paramDtoList			参数集合
+	 */
+	public static byte[] list2Byte(
+			OutputStream out, 
+			List<EasyExcelParamDto> paramDtoList){
+		Assert.notEmpty(paramDtoList);
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		list2Out(bos, paramDtoList);
 		return bos.toByteArray();
 	}
 	
@@ -105,58 +132,30 @@ public class EasyexcelUtil {
 	 * 对象集合sourceList转Excel，输出OutputStream
 	 *	@ReturnType	void 
 	 *	@Date	2020年3月10日	下午5:28:30
-	 *  @Param  @param headers				xlsx文件中第一行（表头）按顺序显示的列名，可以为null
-	 *  @Param  @param sourceList			实体集合
 	 *  @Param  @param out					输出流
-	 *  @Param  @param propertyNames		属性名称
-	 *  @Param  @param keepFlag				属性保留还是去除
+	 *  @Param  @param paramDtoList			参数集合
 	 */
-	public static <T> void list2Out(List<String> headers, List<T> sourceList, OutputStream out, List<String> propertyNames, boolean keepFlag){
-		Assert.notEmpty(sourceList);
+	public static void list2Out(
+			OutputStream out, 
+			List<EasyExcelParamDto> paramDtoList){
+		Assert.notEmpty(paramDtoList);
 		Assert.notNull(out);
 		Instant start = Instant.now();
         ExcelWriter writer = null;
 		try {
 			writer = new ExcelWriter(out, ExcelTypeEnum.XLSX, true);
-			// 创建sheet
-			com.alibaba.excel.metadata.Sheet sheet = new com.alibaba.excel.metadata.Sheet(1, 1);
-			sheet.setSheetName("sheet");
-			// 表头
-			List<List<String>> head = new ArrayList<>(10);
-			if (headers != null && headers.size() != 0) {
-				// 使用参数当表头
-				for (String headName : headers) {
-					head.add(Arrays.asList(headName));
-				}
-			} else {
-				// 使用默认表头
-				Class<?> clazz = sourceList.get(0).getClass();
-				List<Field> fieldList = ReflectionUtils.getFieldList(clazz);
-				// 保留还是去除
-				if (keepFlag) {
-					// 参数属性要保留
-					for (String propertyName : propertyNames) {
-						head.add(Arrays.asList(propertyName));
-					}
-				} else {
-					// 参数属性要去除
-					for (Field field : fieldList) {
-						String fieldName = field.getName();
-						if (propertyNames != null 
-								&& propertyNames.contains(field.getName())) {
-							continue;
-						}
-						// TODO 剔除serialVersionUID
-						if ("serialVersionUID".equals(fieldName)) {
-							continue;
-						}
-						head.add(Arrays.asList(fieldName));
-					}
-				}
+			int sheetNo = 1;
+			for (EasyExcelParamDto dto : paramDtoList) {
+				String sheetName = dto.getSheetName();
+				List<String> headers = dto.getHeaders();
+				List<?> sourceList = dto.getSourceList();
+				List<String> propertyNames = dto.getPropertyNames();
+				boolean keepFlag = dto.isKeepFlag();
+				// 创建sheet
+				com.alibaba.excel.metadata.Sheet sheet = new com.alibaba.excel.metadata.Sheet(sheetNo ++, 1);
+				sheet.setSheetName(sheetName);
+				fillSheet(headers, sourceList, propertyNames, keepFlag, writer, sheet);
 			}
-			sheet.setHead(head);
-			// 内容
-			writer.write1(ObjectUtils.objects2Lists(sourceList, propertyNames, keepFlag), sheet);
 		} catch (Exception e) {
 			logger.error("get error->", e);
 		} finally {
@@ -166,6 +165,83 @@ public class EasyexcelUtil {
 		}
         Instant end = Instant.now();
         logger.info("转换完成，耗时（ms）->" + Duration.between(start, end).toMillis());
+	}
+	
+	/**
+	 * 对象集合sourceList转Excel，输出OutputStream
+	 *	@ReturnType	void 
+	 *	@Date	2020年3月10日	下午5:28:30
+	 *  @Param  @param out					输出流
+	 *  @Param  @param headers				xlsx文件中第一行（表头）按顺序显示的列名，可以为null
+	 *  @Param  @param sourceList			实体集合
+	 *  @Param  @param propertyNames		属性名称
+	 *  @Param  @param keepFlag				属性保留还是去除
+	 */
+	public static <T> void list2Out(
+			OutputStream out, 
+			List<String> headers, 
+			List<T> sourceList, 
+			List<String> propertyNames, 
+			boolean keepFlag){
+		Assert.notEmpty(sourceList);
+		Assert.notNull(out);
+		Instant start = Instant.now();
+        ExcelWriter writer = null;
+		try {
+			writer = new ExcelWriter(out, ExcelTypeEnum.XLSX, true);
+			// 创建sheet1
+			com.alibaba.excel.metadata.Sheet sheet = new com.alibaba.excel.metadata.Sheet(1, 1);
+			sheet.setSheetName("sheet01");
+			fillSheet(headers, sourceList, propertyNames, keepFlag, writer, sheet);
+		} catch (Exception e) {
+			logger.error("get error->", e);
+		} finally {
+			if (writer != null) {
+				writer.finish();
+			}
+		}
+        Instant end = Instant.now();
+        logger.info("转换完成，耗时（ms）->" + Duration.between(start, end).toMillis());
+	}
+
+	private static <T> void fillSheet(List<String> headers, List<T> sourceList, List<String> propertyNames,
+			boolean keepFlag, ExcelWriter writer, com.alibaba.excel.metadata.Sheet sheet) {
+		// 表头
+		List<List<String>> head = new ArrayList<>(10);
+		if (headers != null && headers.size() != 0) {
+			// 使用参数当表头
+			for (String headName : headers) {
+				head.add(Arrays.asList(headName));
+			}
+		} else {
+			// 使用默认表头
+			Class<?> clazz = sourceList.get(0).getClass();
+			List<Field> fieldList = ReflectionUtils.getFieldList(clazz);
+			// 保留还是去除
+			if (keepFlag) {
+				// 参数属性要保留
+				for (String propertyName : propertyNames) {
+					head.add(Arrays.asList(propertyName));
+				}
+			} else {
+				// 参数属性要去除
+				for (Field field : fieldList) {
+					String fieldName = field.getName();
+					if (propertyNames != null 
+							&& propertyNames.contains(field.getName())) {
+						continue;
+					}
+					// TODO 剔除serialVersionUID
+					if ("serialVersionUID".equals(fieldName)) {
+						continue;
+					}
+					head.add(Arrays.asList(fieldName));
+				}
+			}
+		}
+		// 内容
+		sheet.setHead(head);
+		writer.write1(ObjectUtils.objects2Lists(sourceList, propertyNames, keepFlag), sheet);
 	}
 	
 }
